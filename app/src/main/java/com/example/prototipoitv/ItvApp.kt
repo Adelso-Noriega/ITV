@@ -1,7 +1,10 @@
 package com.example.prototipoitv
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -11,6 +14,13 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,13 +41,14 @@ internal enum class Screen(val title: String, val section: String = "", val publ
 @Composable
 internal fun ItvTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = lightColorScheme(
-        primary = Color(0xFF2166BA), onPrimary = Color.White,
-        primaryContainer = Color(0xFFE9F1FC), onPrimaryContainer = Color(0xFF153D6C),
-        secondary = Color(0xFF49627B), background = Color(0xFFF7F9FC),
-        surface = Color.White, surfaceVariant = Color(0xFFEDF1F6),
-        onSurface = Color(0xFF182C42), onSurfaceVariant = Color(0xFF586A7F),
+        primary = Color(0xFF073CB9), onPrimary = Color.White,
+        primaryContainer = Color(0xFFEEF2FF), onPrimaryContainer = Color(0xFF102337),
+        secondary = Color(0xFF596176), background = Color(0xFFF7F8FD),
+        surface = Color.White, surfaceVariant = Color(0xFFEEF2FF),
+        onSurface = Color(0xFF102337), onSurfaceVariant = Color(0xFF596176),
         outline = Color(0xFF77879A), outlineVariant = Color(0xFFDCE3EB)
-    ), content = content)
+    ), shapes = Shapes(small = RoundedCornerShape(12.dp), medium = RoundedCornerShape(20.dp),
+        large = RoundedCornerShape(24.dp)), content = content)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,8 +74,9 @@ internal fun ItvApp() {
     }
     BackHandler(enabled = stack.size > 1, onBack = back)
     Scaffold(
+        containerColor = if (screen == Screen.REGISTER) Color(0xFFF7F8FD) else MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(title = { Column {
+            if (screen != Screen.REGISTER && screen != Screen.LOGIN) TopAppBar(title = { Column {
                 Text(screen.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 Text("ITV · Prototipo visual", style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -74,7 +86,7 @@ internal fun ItvApp() {
                 if (screen == Screen.HOME) IconButton(onClick = { navigate(Screen.ACCOUNT) }) {
                     ItvIcon("account", "Abrir cuenta")
                 }
-            }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White))
+            }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F8FD)))
         },
         bottomBar = {
             if (!screen.public) NavigationBar(containerColor = Color.White) {
@@ -82,18 +94,32 @@ internal fun ItvApp() {
                     Triple(Screen.VEHICLES, "vehicles", "Vehículos"), Triple(Screen.ACCOUNT, "account", "Cuenta")
                 ).forEach { (destination, icon, label) ->
                     NavigationBarItem(selected = screen.section == destination.section,
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFFEEF2FF),
+                            selectedIconColor = Color(0xFF073CB9), selectedTextColor = Color(0xFF073CB9)),
                         onClick = { root(destination) }, icon = { ItvIcon(icon) }, label = { Text(label) })
                 }
             }
         }, snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding).imePadding(), contentAlignment = Alignment.TopCenter) {
-            stateHolder.SaveableStateProvider(screen.name) {
-                Column(Modifier.widthIn(max = 600.dp).fillMaxWidth().verticalScroll(rememberScrollState())
+        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding(), contentAlignment = Alignment.TopCenter) {
+            stateHolder.SaveableStateProvider(if (screen == Screen.LOGIN) Screen.REGISTER.name else screen.name) {
+                val scrollState = rememberScrollState()
+                val focusRequester = remember { FocusRequester() }
+                LaunchedEffect(screen) { focusRequester.requestFocus() }
+                Column(Modifier.widthIn(max = 600.dp).fillMaxWidth()
+                    .onPreviewKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown && scrollState.maxValue > 0 &&
+                            (event.key == Key.DirectionDown || event.key == Key.DirectionUp)) {
+                            val direction = if (event.key == Key.DirectionDown) 1 else -1
+                            scope.launch { scrollState.scrollBy(direction * scrollState.viewportSize * 0.6f) }
+                            true
+                        } else false
+                    }
+                    .focusRequester(focusRequester).focusable()
+                    .verticalScroll(scrollState, enabled = false)
                     .padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     when (screen) {
-                        Screen.REGISTER -> RegisterScreen(navigate) { root(Screen.HOME) }
-                        Screen.LOGIN -> LoginScreen(navigate, back) { root(Screen.HOME) }
+                        Screen.REGISTER, Screen.LOGIN -> RegisterScreen(navigate, back, screen == Screen.LOGIN) { root(Screen.HOME) }
                         Screen.RECOVER -> RecoverScreen(notify) { stack = arrayListOf(Screen.REGISTER.name, Screen.LOGIN.name) }
                         Screen.HOME -> HomeScreen(navigate)
                         Screen.ACCOUNT -> AccountScreen(navigate, logout)
@@ -111,6 +137,7 @@ internal fun ItvApp() {
                     }
                     Spacer(Modifier.height(8.dp))
                 }
+
             }
         }
     }

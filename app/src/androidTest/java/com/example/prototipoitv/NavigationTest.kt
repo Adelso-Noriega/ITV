@@ -29,14 +29,14 @@ class NavigationTest {
         tap("Iniciar sesión")
         tap("¿Olvidaste tu contraseña?")
         tap("Guardar")
-        ui.onNodeWithText("Bienvenido de nuevo").assertIsDisplayed()
-        back()
+        ui.onNodeWithText("Entrar").assertIsDisplayed()
+        tap("Crear cuenta")
         tap("Registro con Google")
         tap("Conceder permiso")
         tap("Aceptar")
-        ui.onNodeWithText("Hola, Alberto").assertIsDisplayed()
+        ui.onNodeWithText("Hola, Usuario").assertIsDisplayed()
         ui.activityRule.scenario.recreate()
-        ui.onNodeWithText("Hola, Alberto").assertIsDisplayed()
+        ui.onNodeWithText("Hola, Usuario").assertIsDisplayed()
     }
 
     @Test fun accountScreensAndLogout() {
@@ -59,7 +59,7 @@ class NavigationTest {
         tap("Mis vehículos")
         tap("+ Registrar vehículo")
         tap("Registrar")
-        tap("Detalle / Modificar")
+        tap("Detalle")
         tap("Modificar vehículo")
         tap("Guardar")
         ui.onNodeWithText("VSSZZZ5FZLR123456").assertExists()
@@ -85,7 +85,7 @@ class NavigationTest {
         tap("Realizar check-in")
         ui.onNodeWithText("Turno de ejemplo: A-001").assertIsDisplayed()
         back()
-        tap("Eliminar cita")
+        tap("Cancelar cita")
         tap("Cancelar")
         ui.onNodeWithText("Cita confirmada").assertIsDisplayed()
     }

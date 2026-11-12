@@ -76,28 +76,33 @@ internal fun Heading(text: String, subtitle: String? = null) {
 
 @Composable
 internal fun Panel(content: @Composable ColumnScope.() -> Unit) {
-    OutlinedCard(Modifier.fillMaxWidth(), shape=RoundedCornerShape(12.dp),
-        colors=CardDefaults.outlinedCardColors(containerColor=Color.White)) {
-        Column(Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(12.dp), content=content)
+    Card(Modifier.fillMaxWidth(), shape=RoundedCornerShape(24.dp),
+        colors=CardDefaults.cardColors(containerColor=Color.White),
+        elevation=CardDefaults.cardElevation(defaultElevation=3.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement=Arrangement.spacedBy(16.dp), content=content)
     }
 }
 
 @Composable
 internal fun Primary(text: String, onClick: () -> Unit) {
-    Button(onClick=onClick, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp), shape=RoundedCornerShape(8.dp)) { Text(text) }
+    Button(onClick=onClick, modifier=Modifier.fillMaxWidth().heightIn(min=56.dp), shape=RoundedCornerShape(12.dp)) { Text(text) }
 }
 
 @Composable
 internal fun Secondary(text: String, onClick: () -> Unit) {
-    OutlinedButton(onClick=onClick, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp), shape=RoundedCornerShape(8.dp)) { Text(text) }
+    OutlinedButton(onClick=onClick, modifier=Modifier.fillMaxWidth().heightIn(min=56.dp), shape=RoundedCornerShape(12.dp)) { Text(text) }
 }
 
 @Composable
 internal fun Field(label: String, initial: String = "", password: Boolean = false, keyboard: KeyboardType = KeyboardType.Text, enabled: Boolean = true) {
     var value by rememberSaveable { mutableStateOf(initial) }
     var visible by rememberSaveable { mutableStateOf(false) }
-    OutlinedTextField(value=value, onValueChange={ value=it }, label={ Text(label) }, singleLine=true,
-        enabled=enabled, modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(8.dp),
+    TextField(value=value, onValueChange={ value=it }, label={ Text(label) }, singleLine=true,
+        enabled=enabled, modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(12.dp),
+        colors=TextFieldDefaults.colors(
+            focusedContainerColor=Color(0xFFEEF2FF), unfocusedContainerColor=Color(0xFFEEF2FF),
+            disabledContainerColor=Color(0xFFF2F4FA), focusedIndicatorColor=Color.Transparent,
+            unfocusedIndicatorColor=Color.Transparent, disabledIndicatorColor=Color.Transparent),
         keyboardOptions=KeyboardOptions(keyboardType=if(password) KeyboardType.Password else keyboard),
         visualTransformation=if(password && !visible) PasswordVisualTransformation() else VisualTransformation.None,
         trailingIcon=if(password) ({ TextButton(onClick={visible=!visible}) { Text(if(visible) "Ocultar" else "Ver") } }) else null)
@@ -108,11 +113,14 @@ internal fun Choice(label: String, options: List<String>, initial: String = opti
     var value by rememberSaveable { mutableStateOf(initial) }
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxWidth()) {
-        OutlinedTextField(value=value, onValueChange={}, readOnly=true, label={Text(label)},
-            modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(8.dp),
+        TextField(value=value, onValueChange={}, readOnly=true, label={Text(label)},
+            modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(12.dp),
+            colors=TextFieldDefaults.colors(
+                focusedContainerColor=Color(0xFFEEF2FF), unfocusedContainerColor=Color(0xFFEEF2FF),
+                focusedIndicatorColor=Color.Transparent, unfocusedIndicatorColor=Color.Transparent),
             trailingIcon={ TextButton(onClick={expanded=true}) { Text("Elegir") } })
         Surface(onClick={expanded=true}, modifier=Modifier.matchParentSize(), color=Color.Transparent,
-            shape=RoundedCornerShape(8.dp)) { Box(Modifier.semantics { contentDescription = "$label: $value. Elegir opción" }) }
+            shape=RoundedCornerShape(12.dp)) { Box(Modifier.semantics { contentDescription = "$label: $value. Elegir opción" }) }
         DropdownMenu(expanded=expanded, onDismissRequest={expanded=false}) {
             options.forEach { option -> DropdownMenuItem(text={Text(option)}, onClick={value=option; expanded=false}) }
         }

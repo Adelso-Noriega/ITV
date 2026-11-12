@@ -1,12 +1,16 @@
 package com.example.prototipoitv
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,18 +29,26 @@ import java.util.TimeZone
 
 @Composable
 internal fun HomeScreen(navigate: (Screen) -> Unit) {
-    Heading("Hola, Alberto", "Todo listo para tu próxima ITV.")
+    Heading("Hola, Usuario", "Todo listo para tu próxima ITV.")
     Panel {
         Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.SpaceBetween, verticalAlignment=Alignment.CenterVertically) {
             Text("Próxima cita", style=MaterialTheme.typography.titleMedium, fontWeight=FontWeight.SemiBold)
             Status("Cita confirmada")
         }
-        Row(horizontalArrangement=Arrangement.spacedBy(12.dp), verticalAlignment=Alignment.CenterVertically) {
-            ItvIcon("vehicles")
-            Column {
-                Text("1234 ABC", style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.Bold)
-                Text("ITV Alicante 1")
-                Text("12/11/2026 · 10:30", color=MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("ITV Alicante 1", style=MaterialTheme.typography.headlineSmall,
+            fontWeight=FontWeight.Bold, color=Color(0xFF102337))
+        Surface(shape=RoundedCornerShape(16.dp), color=Color(0xFFEEF2FF)) {
+            Row(Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement=Arrangement.spacedBy(12.dp), verticalAlignment=Alignment.CenterVertically) {
+                Image(painter=painterResource(R.drawable.vehiculo_ejemplo), contentDescription=null,
+                    contentScale=ContentScale.Crop, modifier=Modifier.size(68.dp).clip(RoundedCornerShape(12.dp)))
+                Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                    Text("1234 ABC", style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.Bold)
+                    Text("SEAT León (Turismo)", style=MaterialTheme.typography.bodyMedium,
+                        color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("12/11/2026 · 10:30", style=MaterialTheme.typography.bodyMedium,
+                        color=MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         Primary("Realizar check-in") { navigate(Screen.CHECK_IN) }
@@ -55,10 +67,13 @@ internal fun HomeScreen(navigate: (Screen) -> Unit) {
 
 @Composable
 private fun QuickAccess(icon: String, label: String, modifier: Modifier, action: () -> Unit) {
-    OutlinedCard(onClick=action, modifier=modifier, colors=CardDefaults.outlinedCardColors(containerColor=Color.White)) {
+    Card(onClick=action, modifier=modifier, shape=RoundedCornerShape(20.dp),
+        colors=CardDefaults.cardColors(containerColor=Color.White),
+        elevation=CardDefaults.cardElevation(defaultElevation=2.dp)) {
         Column(Modifier.fillMaxWidth().padding(vertical=22.dp,horizontal=8.dp), horizontalAlignment=Alignment.CenterHorizontally,
             verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            ItvIcon(icon)
+            Surface(shape=RoundedCornerShape(12.dp), color=Color(0xFFEEF2FF),
+                contentColor=Color(0xFF073CB9)) { Box(Modifier.padding(10.dp)) { ItvIcon(icon) } }
             Text(label, style=MaterialTheme.typography.labelLarge, textAlign=TextAlign.Center)
         }
     }
@@ -118,19 +133,34 @@ private fun MapIllustration() {
 internal fun AppointmentsScreen(navigate: (Screen) -> Unit, notify: (String) -> Unit) {
     var deleting by rememberSaveable { mutableStateOf(false) }
     Heading("Tus próximas citas")
-    Primary("+ Agendar cita") { navigate(Screen.APPOINTMENT_NEW) }
     Panel {
         Status("Cita confirmada")
-        Text("1234 ABC · SEAT León", style=MaterialTheme.typography.titleMedium, fontWeight=FontWeight.Bold)
+        Surface(shape=RoundedCornerShape(16.dp), color=Color(0xFFEEF2FF)) {
+            Row(Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                Image(painter=painterResource(R.drawable.vehiculo_ejemplo), contentDescription=null,
+                    contentScale=ContentScale.Crop, modifier=Modifier.size(68.dp).clip(RoundedCornerShape(12.dp)))
+                Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                    Text("1234 ABC", style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.Bold)
+                    Text("SEAT León (Turismo)", style=MaterialTheme.typography.bodyMedium,
+                        color=MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
         InfoRow("Centro ITV", "ITV Alicante 1")
         InfoRow("Fecha", "12/11/2026")
         InfoRow("Hora", "10:30")
         Primary("Realizar check-in") { navigate(Screen.CHECK_IN) }
         Secondary("Modificar cita") { navigate(Screen.APPOINTMENT_EDIT) }
-        TextButton(onClick={deleting=true}, modifier=Modifier.align(Alignment.End)) { Text("Eliminar cita",color=MaterialTheme.colorScheme.error) }
+        TextButton(onClick={deleting=true}, modifier=Modifier.align(Alignment.End)) { Text("Cancelar cita",color=MaterialTheme.colorScheme.error) }
     }
-    if(deleting) ConfirmDialog("Eliminar cita", "¿Quieres simular la cancelación de esta cita? La cita de ejemplo se mantendrá disponible.",
-        "Eliminar", {deleting=false}) { deleting=false; notify("Cancelación de cita simulada") }
+    Button(onClick={navigate(Screen.APPOINTMENT_NEW)},
+        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp), shape=RoundedCornerShape(12.dp),
+        colors=ButtonDefaults.buttonColors(containerColor=Color(0xFFE2ECFC), contentColor=Color(0xFF102337))) {
+        Text("+ Agendar cita")
+    }
+    if(deleting) ConfirmDialog("Cancelar cita", "¿Quieres simular la cancelación de esta cita? La cita de ejemplo se mantendrá disponible.",
+        "Cancelar cita", {deleting=false}) { deleting=false; notify("Cancelación de cita simulada") }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

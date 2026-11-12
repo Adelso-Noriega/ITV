@@ -1,9 +1,15 @@
 package com.example.prototipoitv
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -14,10 +20,10 @@ import androidx.compose.ui.unit.dp
 internal fun VehiclesScreen(navigate: (Screen) -> Unit, notify: (String) -> Unit) {
     var deleting by rememberSaveable { mutableStateOf(false) }
     Heading("Tus vehículos", "Consulta y prepara la documentación de tu vehículo.")
-    Primary("+ Registrar vehículo") { navigate(Screen.VEHICLE_NEW) }
     Panel {
         Row(verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            ItvIcon("vehicles")
+            Image(painter=painterResource(R.drawable.vehiculo_ejemplo), contentDescription=null,
+                contentScale=ContentScale.Crop, modifier=Modifier.size(68.dp).clip(RoundedCornerShape(12.dp)))
             Column {
                 Text("1234 ABC", style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.Bold)
                 Text("SEAT León · 2020", color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -25,8 +31,13 @@ internal fun VehiclesScreen(navigate: (Screen) -> Unit, notify: (String) -> Unit
         }
         Status("ITV vigente")
         InfoRow("Próxima inspección", "01/01/2027")
-        Secondary("Detalle / Modificar") { navigate(Screen.VEHICLE_DETAIL) }
+        Secondary("Detalle") { navigate(Screen.VEHICLE_DETAIL) }
         TextButton(onClick={deleting=true}, modifier=Modifier.align(Alignment.End)) { Text("Eliminar vehículo", color=MaterialTheme.colorScheme.error) }
+    }
+    Button(onClick={navigate(Screen.VEHICLE_NEW)},
+        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp), shape=RoundedCornerShape(12.dp),
+        colors=ButtonDefaults.buttonColors(containerColor=Color(0xFFE2ECFC), contentColor=Color(0xFF102337))) {
+        Text("+ Registrar vehículo")
     }
     if(deleting) ConfirmDialog("Eliminar vehículo", "¿Quieres simular la eliminación de 1234 ABC? El vehículo de ejemplo se mantendrá para poder recorrer el prototipo.",
         "Eliminar", {deleting=false}) { deleting=false; notify("Eliminación simulada") }
