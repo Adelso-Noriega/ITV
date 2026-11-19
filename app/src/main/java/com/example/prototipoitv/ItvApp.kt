@@ -116,7 +116,7 @@ internal fun ItvApp() {
                         } else false
                     }
                     .focusRequester(focusRequester).focusable()
-                    .verticalScroll(scrollState, enabled = false)
+                    .verticalScroll(scrollState, enabled = true)
                     .padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     when (screen) {
                         Screen.REGISTER, Screen.LOGIN -> RegisterScreen(navigate, back, screen == Screen.LOGIN) { root(Screen.HOME) }
