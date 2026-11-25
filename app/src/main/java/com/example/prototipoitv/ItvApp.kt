@@ -32,8 +32,8 @@ internal enum class Screen(val title: String, val section: String = "", val publ
     RECOVER("Recuperar contraseña", public = true), HOME("Inicio", "home"),
     ACCOUNT("Cuenta", "account"), PROFILE("Perfil de usuario", "account"),
     SECURITY("Seguridad", "account"), VEHICLES("Mis vehículos", "vehicles"),
-    VEHICLE_NEW("Registrar vehículo", "vehicles"), VEHICLE_DETAIL("Detalle del vehículo", "vehicles"),
-    CENTERS("Centros ITV", "home"), RESULTS("Resultados ITV", "home"),
+    VEHICLE_NEW("Registrar vehículo", "vehicles"), VEHICLE_DETAIL("Detalle del vehículo", "vehicles"), VEHICLE_EDIT("Modificar vehículo", "vehicles"),
+    CENTERS("Centros ITV", "centers"), RESULTS("Resultados ITV", "results"),
     APPOINTMENTS("Mis citas", "appointments"), APPOINTMENT_NEW("Agendar cita", "appointments"),
     APPOINTMENT_EDIT("Modificar cita", "appointments"), CHECK_IN("Check-in", "appointments")
 }
@@ -53,7 +53,13 @@ internal fun ItvTheme(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ItvApp() {
+internal fun ItvApp(session: ItvSession) {
+    var vehicleId by rememberSaveable { mutableStateOf("") }
+    var documents by rememberSaveable { mutableStateOf(false) }
+    var visitId by rememberSaveable { mutableStateOf("") }
+    var stationName by rememberSaveable { mutableStateOf("") }
+    val vehicle = session.vehicles.find { it.id == vehicleId }
+    val visit = session.visits.find { it.id == visitId }
     var stack by rememberSaveable { mutableStateOf(arrayListOf(Screen.REGISTER.name)) }
     val screen = Screen.valueOf(stack.last())
     val stateHolder = rememberSaveableStateHolder()
@@ -61,13 +67,26 @@ internal fun ItvApp() {
     val scope = rememberCoroutineScope()
     val notify: (String) -> Unit = { message -> scope.launch { snackbar.showSnackbar(message) }; Unit }
     val navigate: (Screen) -> Unit = { destination ->
-        if (destination != screen) stack = ArrayList(stack + destination.name)
+        if (destination != screen) {
+            if (destination in listOf(Screen.VEHICLE_NEW, Screen.VEHICLE_EDIT, Screen.VEHICLE_DETAIL, Screen.APPOINTMENT_NEW, Screen.APPOINTMENT_EDIT)) {
+                stateHolder.removeState(destination.name)
+            }
+            stack = ArrayList(stack + destination.name)
+        }
     }
     val root: (Screen) -> Unit = { destination ->
         stack = if (destination == Screen.HOME) arrayListOf(Screen.HOME.name)
         else arrayListOf(Screen.HOME.name, destination.name)
     }
     val back: () -> Unit = { if (stack.size > 1) stack = ArrayList(stack.dropLast(1)) }
+    val newVisit: (Station?) -> Unit = { station ->
+        stationName = station?.name.orEmpty()
+        navigate(Screen.APPOINTMENT_NEW)
+    }
+    val openVisit: (Visit, Screen) -> Unit = { selected, target ->
+        visitId = selected.id
+        navigate(target)
+    }
     val logout: () -> Unit = {
         Screen.entries.filter { !it.public }.forEach { stateHolder.removeState(it.name) }
         stack = arrayListOf(Screen.REGISTER.name)
@@ -76,14 +95,14 @@ internal fun ItvApp() {
     Scaffold(
         containerColor = if (screen == Screen.REGISTER) Color(0xFFF7F8FD) else MaterialTheme.colorScheme.background,
         topBar = {
-            if (screen != Screen.REGISTER && screen != Screen.LOGIN) TopAppBar(title = { Column {
+            if (screen != Screen.REGISTER) TopAppBar(title = { Column {
                 Text(screen.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 Text("ITV · Prototipo visual", style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             } }, navigationIcon = {
-                if (stack.size > 1) IconButton(onClick = back) { ItvIcon("back", "Volver") }
+                if (stack.size > 1) FilledTonalIconButton(onClick = back, modifier = Modifier.size(48.dp)) { ItvIcon("back", "Volver") }
             }, actions = {
-                if (screen == Screen.HOME) IconButton(onClick = { navigate(Screen.ACCOUNT) }) {
+                if (screen in listOf(Screen.HOME, Screen.VEHICLES, Screen.APPOINTMENTS, Screen.RESULTS, Screen.CENTERS)) FilledIconButton(onClick = { navigate(Screen.ACCOUNT) }, modifier = Modifier.padding(end = 8.dp).size(48.dp)) {
                     ItvIcon("account", "Abrir cuenta")
                 }
             }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F8FD)))
@@ -91,12 +110,12 @@ internal fun ItvApp() {
         bottomBar = {
             if (!screen.public) NavigationBar(containerColor = Color.White) {
                 listOf(Triple(Screen.HOME, "home", "Inicio"), Triple(Screen.APPOINTMENTS, "appointments", "Citas"),
-                    Triple(Screen.VEHICLES, "vehicles", "Vehículos"), Triple(Screen.ACCOUNT, "account", "Cuenta")
+                    Triple(Screen.VEHICLES, "vehicles", "Vehículos"), Triple(Screen.RESULTS, "results", "Resultados"), Triple(Screen.CENTERS, "centers", "Centros")
                 ).forEach { (destination, icon, label) ->
                     NavigationBarItem(selected = screen.section == destination.section,
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFFEEF2FF),
                             selectedIconColor = Color(0xFF073CB9), selectedTextColor = Color(0xFF073CB9)),
-                        onClick = { root(destination) }, icon = { ItvIcon(icon) }, label = { Text(label) })
+                        onClick = { root(destination) }, icon = { ItvIcon(icon) }, label = { Text(label, maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelSmall) })
                 }
             }
         }, snackbarHost = { SnackbarHost(snackbar) }
@@ -121,19 +140,24 @@ internal fun ItvApp() {
                     when (screen) {
                         Screen.REGISTER, Screen.LOGIN -> RegisterScreen(navigate, back, screen == Screen.LOGIN) { root(Screen.HOME) }
                         Screen.RECOVER -> RecoverScreen(notify) { stack = arrayListOf(Screen.REGISTER.name, Screen.LOGIN.name) }
-                        Screen.HOME -> HomeScreen(navigate)
+                        Screen.HOME -> HomeScreen(session, navigate, newVisit, openVisit)
                         Screen.ACCOUNT -> AccountScreen(navigate, logout)
                         Screen.PROFILE -> ProfileScreen(notify, back)
                         Screen.SECURITY -> SecurityScreen(notify, back)
-                        Screen.VEHICLES -> VehiclesScreen(navigate, notify)
-                        Screen.VEHICLE_NEW -> VehicleFormScreen(false, notify, back)
-                        Screen.VEHICLE_DETAIL -> VehicleDetailScreen(notify)
-                        Screen.CENTERS -> CentersScreen(navigate, notify)
-                        Screen.RESULTS -> ResultsScreen(notify)
-                        Screen.APPOINTMENTS -> AppointmentsScreen(navigate, notify)
-                        Screen.APPOINTMENT_NEW -> AppointmentFormScreen(false, notify) { root(Screen.APPOINTMENTS) }
-                        Screen.APPOINTMENT_EDIT -> AppointmentFormScreen(true, notify) { root(Screen.APPOINTMENTS) }
-                        Screen.CHECK_IN -> CheckInScreen()
+                        Screen.VEHICLES -> VehiclesScreen(session, { navigate(Screen.VEHICLE_NEW) }) { selected, showDocuments ->
+                            vehicleId = selected.id
+                            documents = showDocuments
+                            navigate(Screen.VEHICLE_DETAIL)
+                        }
+                        Screen.VEHICLE_NEW -> VehicleFormScreen(session, null, back)
+                        Screen.VEHICLE_DETAIL -> vehicle?.let { VehicleDetailScreen(session, it, documents, notify) { navigate(Screen.VEHICLE_EDIT) } } ?: MissingRecord(back)
+                        Screen.VEHICLE_EDIT -> vehicle?.let { VehicleFormScreen(session, it, back) } ?: MissingRecord(back)
+                        Screen.CENTERS -> CentersScreen(newVisit)
+                        Screen.RESULTS -> ResultsScreen(session, notify)
+                        Screen.APPOINTMENTS -> AppointmentsScreen(session, newVisit, openVisit)
+                        Screen.APPOINTMENT_NEW -> AppointmentFormScreen(session, null, stationName, back, { navigate(Screen.VEHICLE_NEW) }) { root(Screen.APPOINTMENTS) }
+                        Screen.APPOINTMENT_EDIT -> visit?.let { AppointmentFormScreen(session, it, it.station.name, back, { navigate(Screen.VEHICLE_NEW) }) { root(Screen.APPOINTMENTS) } } ?: MissingRecord(back)
+                        Screen.CHECK_IN -> visit?.let { CheckInScreen(session, it) } ?: MissingRecord(back)
                     }
                     Spacer(Modifier.height(8.dp))
                 }
@@ -145,4 +169,4 @@ internal fun ItvApp() {
 
 @Preview(showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
-private fun AppPreview() { ItvTheme { ItvApp() } }
+private fun AppPreview() { ItvTheme { ItvApp(remember { ItvSession() }) } }

@@ -20,20 +20,22 @@ Prototipo académico en Kotlin y Jetpack Compose basado en los 18 apartados de `
 | 4. Inicio de sesión | Iniciar sesión |
 | 5. Recuperar contraseña | ¿Olvidaste tu contraseña? |
 | 6. Home de usuario | Entrar, o aceptar términos |
-| 7. Cuenta | Barra inferior: Cuenta |
+| 7. Cuenta | Botón de usuario en la barra superior |
 | 8. Perfil | Cuenta > Perfil |
 | 9. Cambio de contraseña | Cuenta > Seguridad |
 | 10. Gestión de vehículos | Barra inferior: Vehículos |
 | 11. Registrar vehículo | Vehículos > Registrar vehículo |
 | 12. Detalle / Modificar vehículo | Vehículos > Detalle / Modificar |
-| 13. Centros ITV | Inicio > Centros ITV; pestañas Lista y Mapa |
-| 14. Resultados ITV | Inicio > Resultados ITV; Último resultado e Histórico |
+| 13. Centros ITV | Barra inferior > Centros; pestañas Lista y Mapa |
+| 14. Resultados ITV | Barra inferior > Resultados; Último resultado e Histórico |
 | 15. Gestión de citas | Barra inferior: Citas |
-| 16. Agendar cita | Inicio > Reservar cita, o Citas > Agendar cita |
+| 16. Agendar cita | Citas > Agendar nueva cita |
 | 17. Modificar cita | Citas > Modificar cita |
 | 18. Realizar check-in | Inicio o Citas > Realizar check-in |
 
-Los formularios admiten cambios visuales; guardar muestra una confirmación y permite continuar la navegación. Los registros de ejemplo permanecen disponibles. Buscar, seleccionar documentos y descargar informes muestran una respuesta de demostración. El mapa y el QR son ilustrativos. Google se representa mediante un diálogo local y no solicita ninguna cuenta real.
+La sesión arranca con tres vehículos y tres citas. Las altas, modificaciones, cancelaciones y nombres de documentos permanecen en memoria al navegar o girar el móvil. Eliminar un vehículo también elimina sus citas. Para repetir la prueba con los datos iniciales, detén y vuelve a ejecutar la aplicación.
+
+Centros muestra las 14 estaciones con dirección para vehículos del catálogo de la Generalitat en la provincia de Alicante. El mapa parte de la EPS II y calcula distancias en línea recta. La costa y los marcadores se dibujan también sin conexión. Con internet se añade la cartografía de OpenStreetMap. Lista y Mapa comparten la búsqueda, el radio desde EPS II, la valoración mínima y la ordenación. Las valoraciones corresponden al directorio de Guía Talleres del 5 de octubre de 2026. «Cómo llegar» abre la ruta por carretera con ese mismo origen. Las reservas y resultados son de demostración.
 
 Las pantallas se organizan en `AuthScreens.kt`, `VehicleScreens.kt` y `VisitScreens.kt`. `ItvApp.kt` contiene el tema y la navegación; `Components.kt`, los componentes visuales compartidos.
 

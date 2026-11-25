@@ -13,7 +13,7 @@ class NavigationTest {
     @get:Rule val ui = createAndroidComposeRule<MainActivity>()
 
     private fun tap(text: String) {
-        val node = ui.onNodeWithText(text)
+        val node = ui.onAllNodesWithText(text).onFirst()
         try { node.assertIsDisplayed() } catch (_: AssertionError) { node.performScrollTo() }
         node.performClick()
     }
@@ -41,7 +41,7 @@ class NavigationTest {
 
     @Test fun accountScreensAndLogout() {
         enter()
-        tap("Cuenta")
+        ui.onNodeWithContentDescription("Abrir cuenta").performClick()
         tap("Perfil")
         tap("Modificar")
         tap("Guardar")
@@ -56,37 +56,51 @@ class NavigationTest {
 
     @Test fun vehiclesCentersAndResults() {
         enter()
-        tap("Mis vehículos")
-        tap("+ Registrar vehículo")
-        tap("Registrar")
+        tap("Vehículos")
+        tap("Documentación")
+        ui.onNodeWithText("Permiso de circulación").assertExists()
         tap("Detalle")
         tap("Modificar vehículo")
         tap("Guardar")
-        ui.onNodeWithText("VSSZZZ5FZLR123456").assertExists()
-        tap("Inicio")
-        tap("Centros ITV")
+        ui.onNodeWithText("Tipo de vehículo").assertExists()
+        ui.onNodeWithText("VIN", substring = true).assertDoesNotExist()
+        tap("Centros")
         tap("Mapa")
-        ui.onNodeWithContentDescription("Mapa de ejemplo con dos centros ITV en Alicante").assertIsDisplayed()
+        ui.onNodeWithText("Centro del mapa").assertExists()
         tap("Lista")
-        back()
-        tap("Resultados ITV")
+        tap("Resultados")
         tap("Histórico")
         tap("Buscar")
         tap("Último resultado")
-        ui.onNodeWithText("Favorable").assertIsDisplayed()
+        ui.onNodeWithText("Favorable").assertExists()
     }
 
     @Test fun appointmentsAndCheckIn() {
         enter()
-        tap("Reservar cita")
+        tap("Citas")
+        tap("+ Agendar nueva cita")
         tap("Agendar")
+        ui.onAllNodesWithText("Cita confirmada").assertCountEquals(4)
         tap("Modificar cita")
         tap("Guardar")
         tap("Realizar check-in")
-        ui.onNodeWithText("Turno de ejemplo: A-001").assertIsDisplayed()
+        ui.onNodeWithText("Turno de ejemplo: A-001").assertExists()
         back()
-        tap("Cancelar cita")
-        tap("Cancelar")
-        ui.onNodeWithText("Cita confirmada").assertIsDisplayed()
+        repeat(4) {
+            tap("Cancelar cita")
+            tap("Sí, cancelar cita")
+        }
+        tap("Inicio")
+        ui.onNodeWithText("Agendar nueva cita").assertExists()
+        ui.activityRule.scenario.recreate()
+        ui.onNodeWithText("Agendar nueva cita").assertExists()
+        tap("Vehículos")
+        repeat(3) {
+            tap("Eliminar vehículo")
+            tap("Eliminar")
+        }
+        tap("Inicio")
+        tap("Añadir coche")
+        ui.onNodeWithText("Nuevo vehículo").assertExists()
     }
 }

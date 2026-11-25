@@ -9,6 +9,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { ItvTheme { ItvApp() } }
+        val session = androidx.lifecycle.ViewModelProvider(this)[ItvSession::class.java]
+        setContent { ItvTheme { ItvApp(session) } }
     }
 }

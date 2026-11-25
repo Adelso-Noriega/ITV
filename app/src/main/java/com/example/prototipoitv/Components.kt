@@ -152,12 +152,26 @@ internal fun ConfirmDialog(title: String, message: String, confirm: String, dism
 }
 
 @Composable
-internal fun FilePicker(label: String, notify: (String) -> Unit) {
-    var selected by rememberSaveable { mutableStateOf(false) }
+internal fun MissingRecord(back: () -> Unit) {
+    Heading("El registro ya no está disponible")
+    Secondary("Volver", back)
+}
+
+@Composable
+internal fun Selection(label: String, options: List<String>, selected: String, change: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
     Column {
-        Text(label, style=MaterialTheme.typography.labelLarge)
-        OutlinedButton(onClick={selected=true; notify("Documento de ejemplo seleccionado")}, modifier=Modifier.fillMaxWidth()) {
-            Text(if(selected) "documento_ejemplo.pdf · Cambiar" else "Buscar documento")
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        Box {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                Text(selected, Modifier.weight(1f))
+                Text("Elegir")
+            }
+            DropdownMenu(expanded, { expanded = false }) {
+                options.forEach { option ->
+                    DropdownMenuItem(text = { Text(option) }, onClick = { change(option); expanded = false })
+                }
+            }
         }
     }
 }
